@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-
+ImageBackground,
 } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from 'D:/fyp/skinscan/firebaseConfig';
@@ -34,7 +34,7 @@ export default function SignIn({ navigation }) {
           navigation.navigate('MainScreen'  );
       }
       else{
-          setErrorMessage('Please verify your email before login')
+          setErrsecomdorMessage('Please verify your email before login')
       }
       setEmail('');
       setPassword('');
@@ -46,6 +46,7 @@ export default function SignIn({ navigation }) {
 }
        
 return (
+  
 <View style={styles.container}>
       <Text style={styles.title}>Glad to see you!</Text>
 

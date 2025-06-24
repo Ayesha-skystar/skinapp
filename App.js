@@ -14,8 +14,9 @@ import  Psoriasis  from 'D:/fyp/skinscan/android/app/src/screens/psoriasis';
 import Tinearingworm from 'D:/fyp/skinscan/android/app/src/screens/tinearingworm';
 import  Warts from 'D:/fyp/skinscan/android/app/src/screens/warts';
 import  ForgotScreen from 'D:/fyp/skinscan/android/app/src/screens/forgotscreen';
+import ScanScreen from 'D:/fyp/skinscan/android/app/src/screens/scanscreen';
 import PrivacyScreen from 'D:/fyp/skinscan/android/app/src/screens/privacyscreen';
-
+import TipScreen from 'D:/fyp/skinscan/android/app/src/screens/tipscreen';
 const Stack = createStackNavigator();
 export default function App() {  
   return (
@@ -37,8 +38,8 @@ export default function App() {
         <Stack.Screen name="Psoriasis" component={Psoriasis}   />
         <Stack.Screen name="Tinearingworm" component={Tinearingworm}   />
         <Stack.Screen name="Warts" component={Warts}   />
-       
-        
+       <Stack.Screen name="TipScreen" component={TipScreen}   />
+       <Stack.Screen name="ScanScreen" component={ScanScreen}   /> 
         
         
 

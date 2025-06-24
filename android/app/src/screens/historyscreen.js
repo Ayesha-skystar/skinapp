@@ -11,7 +11,7 @@ const HistoryScreen = ({ navigation }) => {
         <View style={styles.container}>
             {/* Show History Button */}
             <TouchableOpacity style={styles.button}>
-                <Text style={styles.buttonText}>History</Text>
+                <Text style={styles.buttonText}>History</Text>fir
             </TouchableOpacity>
               {/* History List (Appears Below Buttons) */}
             <FlatList
@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
-        backgroundColor: '#f7f7f7',
+        backgroundColor: '#EED3EA',
         paddingHorizontal: 20,
         paddingTop: 50 // Space at the top
     },
