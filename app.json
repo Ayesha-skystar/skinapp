@@ -2,6 +2,34 @@
   "expo": {
     "name": "skinscan",
     "slug": "skinscan",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "android": {
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
+      "package": "com.yourcompany.skinscan"
+    },
+     "plugins": [
+      [ 
+        "expo-camera",
+
+        {
+          "cameraPermission": "This app needs camera access for skin analysis",
+          "microphonePermission": "For recording measurements"
+        }
+        
+        
+        ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save photos"
+        }
+      ]
+    ]
   }
 }

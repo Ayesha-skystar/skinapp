@@ -75,11 +75,7 @@ const TipScreen = ({ navigation }) => {
   );
 
   return (
-    <ImageBackground 
-      source={require('D:/fyp/skinscan/assets/tipb.jpg')}
-      style={styles.background}
-      blurRadius={1}
-    >
+    
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
         {/* Title Only */}
         <Text style={styles.title}>Tips & Insights</Text>
@@ -106,7 +102,7 @@ const TipScreen = ({ navigation }) => {
           <Text style={styles.goBackText}>Go Back</Text>
         </TouchableOpacity>
       </Animated.View>
-    </ImageBackground>
+    
   );
 };
 

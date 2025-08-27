@@ -1,23 +1,31 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { 
   View, 
   Text, 
   TouchableOpacity, 
   Image, 
   StyleSheet,
-  ScrollView, 
+  ScrollView,
   Modal, 
   ImageBackground, 
   Animated, 
   Easing,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { getAuth, signOut } from 'firebase/auth';
 import * as Animatable from 'react-native-animatable';
+import { Switch } from 'react-native-paper';
+import { ThemeContext } from 'D:/fyp/skinscan/android/app/src/theme/ThemeContext';
 
 const MainScreen = ({ navigation }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [scaleValue] = useState(new Animated.Value(1));
+  const { theme, isDark, toggleTheme } = useContext(ThemeContext);
+
+  if (!theme?.colors) {
+    return <ActivityIndicator size="large" style={styles.loading} />;
+  }
 
   const animatePress = () => {
     Animated.sequence([
@@ -48,119 +56,94 @@ const MainScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Menu Icon */}
-      <Animatable.View 
-        animation="fadeInLeft"
-        duration={800}
-        style={styles.menuIconContainer}
-      >
-        <TouchableOpacity
-          onPress={() => {
-            animatePress();
-            setMenuVisible(!menuVisible);
-          }}
-        >
+      <Animatable.View animation="fadeInLeft" duration={800} style={styles.menuIconContainer}>
+        <TouchableOpacity onPress={() => setMenuVisible(!menuVisible)}>
           <Image
             source={require("D:/fyp/skinscan/assets/menuicon.jpg")}
-            style={styles.menuIcon}
+            style={[styles.menuIcon, { tintColor: theme.colors.primary }]}
           />
         </TouchableOpacity>
       </Animatable.View>
+
+      {/* Theme Toggle */}
+      <View style={styles.themeToggleContainer}>
+        <Switch value={isDark} onValueChange={toggleTheme} color={theme.colors.primary} />
+      </View>
 
       {/* Title */}
       <Animatable.Text 
         animation="fadeInDown"
         duration={1000}
-        style={styles.title}
+        style={[
+          styles.title, 
+          { 
+            color: theme.colors.primary,
+            textShadowColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(138,43,226,0.3)'
+          }
+        ]}
       >
         SkinScan!
       </Animatable.Text>
 
       {/* Main Content */}
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Start Scan */}
-        <Animatable.View 
-          animation="fadeInUp"
-          duration={800}
-          delay={200}
-          style={styles.iconWrapper}
-        >
-          <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
-            <TouchableOpacity 
-              style={styles.iconBox}
-              onPress={() => {
-                animatePress();
-                navigation.navigate('ScanScreen');
-              }}
-              activeOpacity={0.7}
-            >
-              <Image 
-                source={require('D:/fyp/skinscan/assets/scan1.jpg')} 
-                style={styles.mainIcon}
-              />
-              <View style={styles.textBox}>
-                <Text style={styles.iconText}>START SCAN</Text>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* START SCAN */}
+        <Animatable.View animation="fadeInUp" duration={800} delay={200}>
+          <TouchableOpacity 
+            style={[
+              styles.cardContainer,
+              { backgroundColor: theme.colors.cardBackground }
+            ]}
+            onPress={() => navigation.navigate('ScanScreen')}
+            activeOpacity={0.7}
+          >
+            <Image source={require('D:/fyp/skinscan/assets/scan1.jpg')} style={styles.cardIcon} />
+            <View style={[styles.textBox, { backgroundColor: theme.colors.primary }]}>
+              <Text style={[styles.iconText, { color: theme.colors.cardBackground }]}>
+                START SCAN
+              </Text>
+            </View>
+          </TouchableOpacity>
         </Animatable.View>
 
-        {/* Tips & Insights */}
-        <Animatable.View 
-          animation="fadeInUp"
-          duration={800}
-          delay={400}
-          style={styles.iconWrapper}
-        >
-          <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
-            <TouchableOpacity 
-              style={styles.iconBox}
-              onPress={() => {
-                animatePress();
-                navigation.navigate('TipScreen');
-              }}
-              activeOpacity={0.7}
-            >
-              <Image 
-                source={require('D:/fyp/skinscan/assets/tips.jpg')} 
-                style={styles.mainIcon}
-              />
-              <View style={styles.textBox}>
-                <Text style={styles.iconText}>TIPS & INSIGHTS</Text>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
+        {/* TIPS & INSIGHTS */}
+        <Animatable.View animation="fadeInUp" duration={800} delay={400}>
+          <TouchableOpacity 
+            style={[
+              styles.cardContainer,
+              { backgroundColor: theme.colors.cardBackground }
+            ]}
+            onPress={() => navigation.navigate('TipScreen')}
+            activeOpacity={0.7}
+          >
+            <Image source={require('D:/fyp/skinscan/assets/tips.jpg')} style={styles.cardIcon} />
+            <View style={[styles.textBox, { backgroundColor: theme.colors.primary }]}>
+              <Text style={[styles.iconText, { color: theme.colors.cardBackground }]}>
+                TIPS & INSIGHTS
+              </Text>
+            </View>
+          </TouchableOpacity>
         </Animatable.View>
 
-        {/* History */}
-        <Animatable.View 
-          animation="fadeInUp"
-          duration={800}
-          delay={600}
-          style={styles.iconWrapper}
-        >
-          <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
-            <TouchableOpacity 
-              style={styles.iconBox}
-              onPress={() => {
-                animatePress();
-                navigation.navigate('HistoryScreen');
-              }}
-              activeOpacity={0.7}
-            >
-              <Image 
-                source={require('D:/fyp/skinscan/assets/history.jpg')} 
-                style={styles.mainIcon}
-              />
-              <View style={styles.textBox}>
-                <Text style={styles.iconText}>HISTORY</Text>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
+        {/* HISTORY */}
+        <Animatable.View animation="fadeInUp" duration={800} delay={600}>
+          <TouchableOpacity 
+            style={[
+              styles.cardContainer,
+              { backgroundColor: theme.colors.cardBackground }
+            ]}
+            onPress={() => navigation.navigate('HistoryScreen')}
+            activeOpacity={0.7}
+          >
+            <Image source={require('D:/fyp/skinscan/assets/history.jpg')} style={styles.cardIcon} />
+            <View style={[styles.textBox, { backgroundColor: theme.colors.primary }]}>
+              <Text style={[styles.iconText, { color: theme.colors.cardBackground }]}>
+                HISTORY
+              </Text>
+            </View>
+          </TouchableOpacity>
         </Animatable.View>
       </ScrollView>
 
@@ -178,40 +161,29 @@ const MainScreen = ({ navigation }) => {
             resizeMode="contain"
           >
             <View style={styles.menuContent}>
-              
-              <TouchableOpacity 
-                onPress={() => {
-                  setMenuVisible(false);
-                  navigation.navigate("AboutusScreen");
-                }}
-              >
+              <TouchableOpacity onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate("AboutusScreen");
+              }}>
                 <Text style={styles.menuItem}>About us</Text>
               </TouchableOpacity>
               
-              
-              <TouchableOpacity 
-                onPress={() => {
-                  setMenuVisible(false);
-                  handleLogout();
-                }}
-              >
+              <TouchableOpacity onPress={() => {
+                setMenuVisible(false);
+                handleLogout();
+              }}>
                 <Text style={styles.menuItem}>Log Out</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity 
-                onPress={() => {
-                  setMenuVisible(false);
-                  navigation.navigate("PrivacyScreen");
-                }}
-              >
+              <TouchableOpacity onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate("PrivacyScreen");
+              }}>
                 <Text style={styles.menuItem}>PrivacyPolicy</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity
-                onPress={() => setMenuVisible(false)}
-                style={styles.closeButton}
-              >
-                <Text style={styles.closeText}>Close</Text>
+              <TouchableOpacity onPress={() => setMenuVisible(false)}>
+                <Text style={styles.closeButton}>Close</Text>
               </TouchableOpacity>
             </View>
           </ImageBackground>
@@ -224,12 +196,12 @@ const MainScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EED3EA',
+    paddingTop: 50,
   },
-  scrollContainer: {
-    flexGrow: 1,
+  loading: {
+    flex: 1,
     justifyContent: 'center',
-    paddingBottom: 40,
+    alignItems: 'center'
   },
   menuIconContainer: {
     position: 'absolute',
@@ -240,52 +212,59 @@ const styles = StyleSheet.create({
   menuIcon: {
     width: 40,
     height: 40,
-    tintColor: '#8A2BE2',
+  },
+  themeToggleContainer: {
+    position: 'absolute',
+    top: 45,
+    right: 20,
+    zIndex: 10,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#7F3C88',
     textAlign: 'center',
     marginTop: 50,
     marginBottom: 20,
-    textShadowColor: 'rgba(138, 43, 226, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
-  iconWrapper: {
-    marginVertical: 15,
-    width: '80%',
-    alignSelf: 'center',
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingBottom: 40,
   },
-  iconBox: {
+  cardContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 15,
+    padding: 20,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#8A2BE2',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
+    width: '75%',
+    alignSelf: 'center',
+    marginVertical: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
     elevation: 5,
   },
-  mainIcon: {
+  cardIcon: {
     width: 100,
     height: 100,
-    marginBottom: 10,
+    marginBottom: 15,
   },
   textBox: {
-    backgroundColor: '#7F3C88',
     paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
+    paddingHorizontal: 5,
+    borderRadius: 30,
     marginTop: 5,
+    width: '75%',
+    alignItems: 'center',
+    
+    
   },
   iconText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF',
     textAlign: 'center',
   },
   modalOverlay: {
@@ -325,13 +304,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#e17c95',
     padding: 10,
     borderRadius: 10,
-    width: 160,
-    alignItems: 'center',
-  },
-  closeText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
+    width: 160,
   },
 });
 
