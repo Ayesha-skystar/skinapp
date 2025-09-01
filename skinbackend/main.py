@@ -1,33 +1,38 @@
+# === FIXED MAIN.PY WITH SKIN DETECTION ===
+import os
+import io
+import cv2
+import torch
+import numpy as np
+import logging
+from PIL import Image
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import torch
+from typing import Dict, List, Optional
+import timm
 import torch.nn as nn
 from torchvision import transforms
-from PIL import Image, ImageOps, UnidentifiedImageError
-import io
-import numpy as np
-import cv2
-import logging
-import timm
 import uvicorn
-import os
+import traceback
 
-# Configuration
-DETECTION_MODEL_PATH = "D:/fyp/skinbackend/model/skin_detector_epoch_30.pth"
+# Configuration - UPDATE WITH YOUR ACTUAL MODEL PATH
+DETECTION_MODEL_PATH = "D:/fyp/skinbackend/model/model.pth"
 CLASS_NAMES = ['Acne', 'Eczema', 'Psoriasis', 'Tinea Ringworm', 'Warts Molluscum']
-DETECTION_IMAGE_SIZE = 512
-MIN_SKIN_PERCENTAGE = 10  # Reduced from 20% to 10% for better acceptance
-MIN_CONFIDENCE_THRESHOLD = 0.6
-app = FastAPI()
+DETECTION_IMAGE_SIZE = 384
+MIN_CONFIDENCE_THRESHOLD = 0.7
+MIN_SKIN_PERCENTAGE = 20.0  # Minimum percentage of skin pixels required
+
+app = FastAPI(title="Skin Disease Detection API", version="1.0")
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+logger.info(f"Using device: {device}")
 
-# CORS
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,340 +43,330 @@ app.add_middleware(
 # Response Models
 class DetectionResponse(BaseModel):
     status: str
-    message: str = None
-    detection: dict = None
-    confidence: float = None
-    suggestion: str = None
+    message: Optional[str] = None
+    detection: Optional[Dict] = None
+    confidence: Optional[float] = None
+    suggestion: Optional[str] = None
+    reasons: Optional[List[str]] = None
+    skin_percentage: Optional[float] = None
 
-# Skin Disease Detector Model
-class SkinDiseaseDetector(nn.Module):
-    def __init__(self, num_classes=5):
+class HealthResponse(BaseModel):
+    status: str
+    message: str
+    device: str
+    model_loaded: bool
+
+# Model definition
+class AdvancedSkinNet(nn.Module):
+    def __init__(self, num_classes=5, backbone_name='tf_efficientnet_b3', dropout_rate=0.3):
         super().__init__()
-        self.backbone = timm.create_model('efficientnet_b0', 
-                                         features_only=True,
-                                         pretrained=True,
-                                         out_indices=(4,))
-        
-        # Get correct number of channels from backbone
-        dummy_input = torch.randn(1, 3, DETECTION_IMAGE_SIZE, DETECTION_IMAGE_SIZE)
-        features = self.backbone(dummy_input)
-        in_channels = features[0].shape[1]
-        
-        self.class_head = nn.Sequential(
-            nn.Conv2d(in_channels, 256, 3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(256, num_classes, 3, padding=1)
+        self.backbone = timm.create_model(
+            backbone_name, 
+            pretrained=False,
+            num_classes=0,
+            global_pool=''
         )
-        self.bbox_head = nn.Sequential(
-            nn.Conv2d(in_channels, 256, 3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(256, 4, 3, padding=1)
-        )
-
+        
+        feature_dim = self.backbone.num_features
+        self.global_pool = nn.AdaptiveAvgPool2d(1)
+        self.dropout = nn.Dropout(dropout_rate)
+        self.fc = nn.Linear(feature_dim, num_classes)
+        self.bn = nn.BatchNorm1d(feature_dim)
+    
     def forward(self, x):
-        features = self.backbone(x)[0]
-        return {
-            'class_logits': self.class_head(features),
-            'bbox_preds': torch.sigmoid(self.bbox_head(features))
-        }
+        features = self.backbone(x)
+        pooled = self.global_pool(features).flatten(1)
+        normalized = self.bn(pooled)
+        dropped = self.dropout(normalized)
+        return self.fc(dropped)
 
-# Model Loader
+def safe_load_model(file_path, device):
+    """Safely load model with PyTorch 2.6+ compatibility"""
+    try:
+        # First try with weights_only=True (safe mode)
+        try:
+            # Add safe globals for numpy objects as suggested in the error
+            from numpy.core.multiarray import scalar
+            if hasattr(torch.serialization, 'add_safe_globals'):
+                torch.serialization.add_safe_globals([scalar])
+                logger.info("Added numpy scalar to safe globals")
+            
+            checkpoint = torch.load(file_path, map_location=device, weights_only=False)
+            logger.info("Model loaded with weights_only=True (safe mode)")
+            return checkpoint, None
+            
+        except (RuntimeError, TypeError, AttributeError) as e:
+            logger.warning(f"Safe loading failed: {e}. Trying unsafe loading...")
+            
+            # If safe loading fails, try unsafe loading
+            try:
+                checkpoint = torch.load(file_path, map_location=device, weights_only=False)
+                logger.warning("Model loaded with weights_only=False (UNSAFE mode)")
+                return checkpoint, None
+            except Exception as inner_e:
+                logger.error(f"Unsafe loading also failed: {inner_e}")
+                return None, f"Both safe and unsafe loading failed: {str(inner_e)}"
+                
+    except Exception as e:
+        return None, f"Model loading error: {str(e)}"
+
 def load_detection_model():
-    detection_model = SkinDiseaseDetector(num_classes=len(CLASS_NAMES)).to(device)
-    
-    # Load state dict with strict=False to handle missing keys
-    state_dict = torch.load(DETECTION_MODEL_PATH, map_location=device)
-    
-    # Filter out unnecessary keys and handle mismatches
-    filtered_state_dict = {}
-    for k, v in state_dict.items():
-        # Remove 'module.' prefix if present (from DataParallel)
-        if k.startswith('module.'):
-            k = k[7:]
-        filtered_state_dict[k] = v
-    
-    detection_model.load_state_dict(filtered_state_dict, strict=False)
-    detection_model.eval()
-    return detection_model
-
-detection_model = load_detection_model()
-
-# Detection transforms
-detection_transform = transforms.Compose([
-    transforms.Resize((DETECTION_IMAGE_SIZE, DETECTION_IMAGE_SIZE)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
-
-# Process detection output function
-def process_detection_output(outputs):
-    """Process detection model outputs to get class and bbox predictions"""
-    class_logits = outputs['class_logits'].permute(0, 2, 3, 1).contiguous()
-    class_logits = class_logits.view(-1, len(CLASS_NAMES))
-    class_probs = torch.softmax(class_logits, dim=1).mean(dim=0)
-    
-    bbox_preds = outputs['bbox_preds'].permute(0, 2, 3, 1).contiguous()
-    bbox_preds = bbox_preds.view(-1, 4)
-    avg_bbox = bbox_preds.mean(dim=0)
-    
-    return class_probs, avg_bbox
-
-# Enhanced Medical Preprocessing
-def medical_preprocess(image: Image.Image) -> torch.Tensor:
-    # Convert to numpy for enhancement
-    img = np.array(image)
-    
+    """Load the trained model with proper error handling"""
     try:
-        # Basic enhancement
-        lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
-        l, a, b = cv2.split(lab)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-        cl = clahe.apply(l)
-        limg = cv2.merge((cl, a, b))
-        enhanced = cv2.cvtColor(limg, cv2.COLOR_LAB2RGB)
-        enhanced_img = Image.fromarray(enhanced)
-    except Exception as e:
-        logger.warning(f"Image enhancement failed: {str(e)}")
-        enhanced_img = image
-    
-    return detection_transform(enhanced_img).unsqueeze(0).to(device)
-
-# Improved skin validation - More lenient for disease images
-def validate_skin_image(img: np.ndarray) -> dict:
-    """Enhanced skin image validation with better disease detection"""
-    validation = {
-        'is_valid': False,
-        'reasons': [],
-        'suggestions': [],
-        'skin_percentage': 0.0
-    }
-    
-    try:
-        # Check if image is valid (not corrupted)
-        if img.size == 0:
-            validation['reasons'].append("Empty image")
-            return validation
+        model = AdvancedSkinNet(num_classes=len(CLASS_NAMES)).to(device)
         
-        # Check image dimensions
-        if img.shape[0] < 100 or img.shape[1] < 100:
-            validation['reasons'].append("Image is too small")
-            validation['suggestions'].append("Please upload a higher resolution image")
-            return validation
+        # Check if model file exists
+        if not os.path.exists(DETECTION_MODEL_PATH):
+            logger.error(f"Model file not found at: {DETECTION_MODEL_PATH}")
+            return None, f"Model file not found at: {DETECTION_MODEL_PATH}"
+        
+        # Load the checkpoint safely
+        checkpoint, error = safe_load_model(DETECTION_MODEL_PATH, device)
+        if checkpoint is None:
+            return None, error
+        
+        # Load model weights from checkpoint
+        try:
+            if isinstance(checkpoint, dict):
+                if 'model_state_dict' in checkpoint:
+                    model.load_state_dict(checkpoint['model_state_dict'])
+                    logger.info("Model loaded from model_state_dict")
+                elif 'state_dict' in checkpoint:
+                    model.load_state_dict(checkpoint['state_dict'])
+                    logger.info("Model loaded from state_dict")
+                elif 'model' in checkpoint:
+                    model.load_state_dict(checkpoint['model'])
+                    logger.info("Model loaded from 'model' key")
+                else:
+                    # Try to find the state dict in the checkpoint
+                    state_dict_found = False
+                    for key in checkpoint.keys():
+                        if 'state_dict' in key.lower() or 'model' in key.lower():
+                            model.load_state_dict(checkpoint[key])
+                            logger.info(f"Model loaded from {key}")
+                            state_dict_found = True
+                            break
+                    
+                    if not state_dict_found:
+                        # If no state dict found, try direct loading
+                        model.load_state_dict(checkpoint)
+                        logger.info("Model loaded directly from checkpoint (assumed state dict)")
+            else:
+                # Checkpoint is not a dictionary, try direct loading
+                model.load_state_dict(checkpoint)
+                logger.info("Model loaded directly from checkpoint (non-dict)")
+                
+        except Exception as e:
+            error_msg = f"Error loading model weights: {str(e)}"
+            logger.error(error_msg)
+            if isinstance(checkpoint, dict):
+                logger.error(f"Checkpoint keys: {list(checkpoint.keys())}")
+            return None, error_msg
             
-        # Convert to HSV color space
-        hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-        
-        # Enhanced skin color ranges for different skin tones (more inclusive)
-        skin_ranges = [
-            # Light skin tones
-            ([0, 15, 50], [25, 200, 255]),
-            # Medium skin tones
-            ([0, 25, 40], [25, 220, 240]),
-            # Dark skin tones
-            ([0, 40, 30], [25, 255, 220]),
-            # Additional ranges for various lighting conditions
-            ([0, 10, 50], [30, 180, 250]),
-            # For reddish skin conditions (like acne, psoriasis)
-            ([0, 30, 50], [10, 200, 255]),
-            ([170, 30, 50], [180, 200, 255])  # For reddish tones
-        ]
-        
-        # Combine skin masks
-        combined_mask = np.zeros(img.shape[:2], dtype=np.uint8)
-        for lower, upper in skin_ranges:
-            mask = cv2.inRange(hsv, np.array(lower), np.array(upper))
-            combined_mask = cv2.bitwise_or(combined_mask, mask)
-        
-        # Apply morphological operations to clean up the mask
-        kernel = np.ones((3,3), np.uint8)  # Smaller kernel
-        combined_mask = cv2.morphologyEx(combined_mask, cv2.MORPH_CLOSE, kernel)
-        combined_mask = cv2.morphologyEx(combined_mask, cv2.MORPH_OPEN, kernel)
-        
-        # Calculate skin percentage
-        skin_pixels = cv2.countNonZero(combined_mask)
-        total_pixels = img.shape[0] * img.shape[1]
-        skin_percent = (skin_pixels / total_pixels) * 100
-        validation['skin_percentage'] = skin_percent
-        
-        # Check for very low skin percentage (likely not a skin image)
-        if skin_percent < 5:  # Very strict threshold for complete non-skin images
-            validation['reasons'].append(f"Only {skin_percent:.1f}% skin detected")
-            validation['suggestions'].append("Please upload a clear photo of affected skin area")
-            return validation
-        
-        # Additional validation: check if image contains mostly textures/patterns
-        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        
-        # Check image focus/blurriness (more lenient threshold)
-        fm = cv2.Laplacian(gray, cv2.CV_64F).var()
-        if fm < 50:  # Reduced from 100 to 50 for blurry images
-            validation['reasons'].append("Image is too blurry")
-            validation['suggestions'].append("Please take a clearer photo with good lighting")
-        
-        # For disease images, we should be more lenient about edges
-        # Many skin diseases have textures that create edges
-        edges = cv2.Canny(gray, 100, 200)
-        edge_percent = (cv2.countNonZero(edges) / total_pixels) * 100
-        
-        # Only reject if it's clearly a non-skin object (very high edge density)
-        if edge_percent > 50:  # Increased from 30 to 50
-            validation['reasons'].append("Image appears to contain non-skin objects")
-            validation['suggestions'].append("Please upload a clear photo of skin only")
-        
-        # Check if image is mostly one color (likely not a skin disease image)
-        unique_colors = len(np.unique(img.reshape(-1, img.shape[2]), axis=0))
-        if unique_colors < 10:  # Very few colors might indicate a non-skin image
-            validation['reasons'].append("Image doesn't appear to contain skin texture")
-            validation['suggestions'].append("Please upload a photo of actual skin")
-        
-        validation['is_valid'] = len(validation['reasons']) == 0
-        return validation
+        model.eval()
+        logger.info("Model loaded successfully")
+        return model, None
         
     except Exception as e:
-        logger.error(f"Validation error: {str(e)}")
-        validation['reasons'].append("Image processing failed")
-        return validation
+        error_msg = f"Error loading model: {str(e)}"
+        logger.error(error_msg)
+        traceback.print_exc()
+        return None, error_msg
 
-# Improved object detection - More accurate for skin disease images
-def contains_objects(img: np.ndarray) -> bool:
-    """Check if image contains obvious non-skin objects"""
+def calculate_skin_percentage(image_np):
+    """Calculate what percentage of the image appears to be skin"""
     try:
-        # Convert to grayscale
-        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        # Convert to HSV color space (better for skin detection)
+        hsv = cv2.cvtColor(image_np, cv2.COLOR_RGB2HSV)
         
-        # Calculate edge density
-        edges = cv2.Canny(gray, 100, 200)
-        edge_density = np.sum(edges > 0) / edges.size
+        # Define skin color range in HSV
+        # These values may need adjustment based on your dataset
+        lower_skin = np.array([0, 20, 70], dtype=np.uint8)
+        upper_skin = np.array([20, 255, 255], dtype=np.uint8)
         
-        # Calculate texture complexity using variance of Laplacian
-        lap_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+        # Create mask for skin-colored pixels
+        skin_mask = cv2.inRange(hsv, lower_skin, upper_skin)
         
-        # Check for regular patterns that indicate man-made objects
-        fft = np.fft.fft2(gray)
-        fft_shift = np.fft.fftshift(fft)
-        magnitude_spectrum = 20 * np.log(np.abs(fft_shift) + 1)
+        # Calculate percentage of skin-colored pixels
+        skin_pixels = np.sum(skin_mask > 0)
+        total_pixels = image_np.shape[0] * image_np.shape[1]
+        skin_percentage = (skin_pixels / total_pixels) * 100
         
-        # If very high edge density OR very high texture with regular patterns
-        # Only reject obvious non-skin objects
-        if edge_density > 0.4 or (lap_var > 1500 and np.std(magnitude_spectrum) > 80):
-            return True
-            
-        return False
+        return min(skin_percentage, 100.0)
+        
     except Exception as e:
-        logger.error(f"Object detection error: {str(e)}")
-        return False
+        logger.warning(f"Skin percentage calculation failed: {e}")
+        return 0.0
 
-@app.post("/detect")
+def is_likely_skin_image(image_np, threshold=MIN_SKIN_PERCENTAGE):
+    """Check if the image contains enough skin to be a valid skin image"""
+    skin_percentage = calculate_skin_percentage(image_np)
+    return skin_percentage >= threshold, skin_percentage
+
+# Initialize model
+detection_model, model_error = load_detection_model()
+
+# Transform
+def get_detection_transform():
+    return transforms.Compose([
+        transforms.Resize((DETECTION_IMAGE_SIZE, DETECTION_IMAGE_SIZE)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
+detection_transform = get_detection_transform()
+
+@app.get("/health", response_model=HealthResponse)
+async def health_check():
+    return HealthResponse(
+        status="success",
+        message="API is running",
+        device=str(device),
+        model_loaded=detection_model is not None
+    )
+
+@app.post("/detect", response_model=DetectionResponse)
 async def detect(file: UploadFile = File(...)):
     try:
-        # Check file type
-        if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "status": "error",
-                    "message": "Invalid file format. Please upload JPEG or PNG images only."
-                }
+        if detection_model is None:
+            return DetectionResponse(
+                status="error",
+                message=f"Model not loaded. Error: {model_error}",
+                reasons=["Model initialization failed"]
             )
         
-        # Load image
+        # Read image
         contents = await file.read()
+        
         try:
             image = Image.open(io.BytesIO(contents)).convert('RGB')
             img_np = np.array(image)
-        except UnidentifiedImageError:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "status": "error",
-                    "message": "Invalid image file. Please upload a valid image."
-                }
+        except Exception as e:
+            return DetectionResponse(
+                status="error",
+                message="Invalid image file",
+                reasons=["Could not process the uploaded image"]
             )
         
-        # First, run basic validation but don't reject immediately
-        validation = validate_skin_image(img_np)
+        # Check if image contains enough skin
+        is_skin, skin_percentage = is_likely_skin_image(img_np)
         
-        # Check if image contains obvious non-skin objects
-        if contains_objects(img_np):
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "status": "error",
-                    "message": "Image appears to contain non-skin objects. Please upload a clear photo of skin only.",
-                    "suggestion": "Crop the image to focus on the affected skin area"
-                }
+        if not is_skin:
+            return DetectionResponse(
+                status="success",
+                message="Image does not appear to contain skin",
+                detection=None,
+                confidence=0.0,
+                suggestion="Please upload an image of skin for disease detection.",
+                skin_percentage=skin_percentage,
+                reasons=["Low skin content detected"]
             )
         
-        # For skin disease images, we should be more lenient
-        # Only reject if it's clearly not a skin image
-        if not validation['is_valid']:
-            # Check if it might still be a skin disease image despite validation issues
-            skin_percent = validation['skin_percentage']
+        # Preprocess image
+        try:
+            tensor = detection_transform(image).unsqueeze(0).to(device)
+        except Exception as e:
+            return DetectionResponse(
+                status="error",
+                message="Image processing error",
+                reasons=["Failed to preprocess image"]
+            )
+        
+        # Get predictions
+        try:
+            with torch.no_grad():
+                outputs = detection_model(tensor)
+                probs = torch.softmax(outputs, dim=1)
+                confidence, class_idx = torch.max(probs, dim=1)
+                confidence = confidence.item()
+                class_idx = class_idx.item()
             
-            # If there's some skin detected, proceed with detection anyway
-            if skin_percent >= 5:  # At least 5% skin
-                logger.info(f"Proceeding with detection despite validation issues. Skin: {skin_percent}%")
-            else:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "status": "error",
-                        "message": "Invalid skin image",
-                        "reasons": validation['reasons'],
-                        "suggestions": validation['suggestions']
-                    }
+            # Get top predictions
+            top3_probs, top3_indices = torch.topk(probs, 3)
+            top_predictions = {
+                CLASS_NAMES[i]: p.item() for p, i in zip(top3_probs[0], top3_indices[0])
+            }
+            
+            detected_disease = CLASS_NAMES[class_idx]
+            
+            # Response logic
+            if confidence < MIN_CONFIDENCE_THRESHOLD:
+                return DetectionResponse(
+                    status="success",
+                    message="Analysis completed with low confidence",
+                    detection={
+                        "disease": detected_disease,
+                        "confidence": confidence,
+                        "is_low_confidence": True,
+                        "all_predictions": top_predictions
+                    },
+                    suggestion="For accurate diagnosis, please consult a dermatologist.",
+                    skin_percentage=skin_percentage
                 )
+            else:
+                suggestions = {
+                    "Acne": "Consider over-the-counter treatments with benzoyl peroxide or salicylic acid.",
+                    "Eczema": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+                    "Psoriasis": "Moisturize regularly and avoid triggers.",
+                    "Tinea Ringworm": "Antifungal creams are typically effective.",
+                    "Warts Molluscum": "May resolve on their own. Treatments available."
+                }
+                
+                return DetectionResponse(
+                    status="success",
+                    message="Analysis completed with high confidence",
+                    detection={
+                        "disease": detected_disease,
+                        "confidence": confidence,
+                        "is_low_confidence": False,
+                        "all_predictions": top_predictions
+                    },
+                    suggestion=suggestions.get(detected_disease, 'Please consult a healthcare professional.'),
+                    skin_percentage=skin_percentage
+                )
+                
+        except Exception as e:
+            logger.error(f"Prediction error: {str(e)}\n{traceback.format_exc()}")
+            return DetectionResponse(
+                status="error",
+                message="Prediction failed",
+                reasons=["Error during model prediction"]
+            )
         
-        # Preprocess for detection
-        tensor = medical_preprocess(image)
-        
-        # Run detection
-        with torch.no_grad():
-            outputs = detection_model(tensor)
-        
-        # Process outputs using the original function
-        class_probs, bbox = process_detection_output(outputs)
-        class_idx = torch.argmax(class_probs).item()
-        confidence = float(class_probs[class_idx])
-        
-        # Check if confidence meets threshold
-        if confidence < MIN_CONFIDENCE_THRESHOLD:
-            return {
-                "status": "success",
-                "message": "No specific skin condition detected with high confidence",
-                "detection": {
-                    "disease": "No specific condition",
-                    "confidence": confidence
-                },
-                "suggestion": "Please consult a dermatologist for accurate diagnosis"
-            }
-        
-        return {
-            "status": "success",
-            "detection": {
-                "disease": CLASS_NAMES[class_idx],
-                "confidence": confidence,
-                "bbox": [
-                    float(bbox[0]),  # x1
-                    float(bbox[1]),  # y1
-                    float(bbox[2]),  # x2
-                    float(bbox[3])   # y2
-                ]
-            }
-        }
-    
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Detection failed: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "status": "error",
-                "message": "Internal server error during detection",
-                "suggestion": "Please try again with a different image"
-            }
+        logger.error(f"Unexpected error in detect: {str(e)}\n{traceback.format_exc()}")
+        return DetectionResponse(
+            status="error",
+            message="Internal server error",
+            reasons=["Unexpected error occurred"]
         )
 
+@app.get("/classes")
+async def get_classes():
+    return {
+        "status": "success",
+        "classes": CLASS_NAMES,
+        "total_classes": len(CLASS_NAMES),
+        "confidence_threshold": MIN_CONFIDENCE_THRESHOLD
+    }
+
+@app.get("/model-info")
+async def get_model_info():
+    return {
+        "status": "success",
+        "model_architecture": "EfficientNet-B3 with custom head",
+        "input_size": DETECTION_IMAGE_SIZE,
+        "classes": CLASS_NAMES,
+        "device": str(device),
+        "model_loaded": detection_model is not None,
+        "model_error": model_error if detection_model is None else None
+    }
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Create model directory if it doesn't exist
+    model_dir = os.path.dirname(DETECTION_MODEL_PATH)
+    if model_dir and not os.path.exists(model_dir):
+        os.makedirs(model_dir, exist_ok=True)
+        logger.info(f"Created model directory: {model_dir}")
+    
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

@@ -1,0 +1,391 @@
+{
+  "metrics": {
+    "accuracy": 0,
+    "avg_confidence": 0.8783620407706813,
+    "total_tests": 0,
+    "correct_predictions": 0,
+    "total_images": 19
+  },
+  "detailed_results": [
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.93219393491745,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.93219393491745,
+          "Psoriasis": 0.03261003643274307,
+          "Warts Molluscum": 0.014949691481888294
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 96.23858552429981,
+      "file_path": "test_images/eczema/0_1.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.8993571400642395,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.8993571400642395,
+          "Warts Molluscum": 0.03664068505167961,
+          "Tinea Ringworm": 0.03058548830449581
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 65.75963718820861,
+      "file_path": "test_images/eczema/0_10.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.92148756980896,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.92148756980896,
+          "Acne": 0.03041663207113743,
+          "Tinea Ringworm": 0.01907956227660179
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 95.35453821168107,
+      "file_path": "test_images/eczema/0_11.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.9097055792808533,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.9097055792808533,
+          "Psoriasis": 0.02823830395936966,
+          "Acne": 0.02763805352151394
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 91.90568119139547,
+      "file_path": "test_images/eczema/0_12.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.9196613430976868,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.9196613430976868,
+          "Warts Molluscum": 0.03680858388543129,
+          "Psoriasis": 0.01832832396030426
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 50.66648280933995,
+      "file_path": "test_images/eczema/0_13.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.943494975566864,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.943494975566864,
+          "Tinea Ringworm": 0.023175865411758423,
+          "Psoriasis": 0.01364859752357006
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 47.741619170190596,
+      "file_path": "test_images/eczema/0_14.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.9244043231010437,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.9244043231010437,
+          "Acne": 0.033597182482481,
+          "Tinea Ringworm": 0.023079441860318184
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 80.80989152417723,
+      "file_path": "test_images/eczema/0_17.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.9509251117706299,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.9509251117706299,
+          "Acne": 0.015724748373031616,
+          "Warts Molluscum": 0.013408415019512177
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 87.41343384200528,
+      "file_path": "test_images/eczema/0_18.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.9415671229362488,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.9415671229362488,
+          "Psoriasis": 0.021444154903292656,
+          "Tinea Ringworm": 0.013468893244862556
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 76.01121529692958,
+      "file_path": "test_images/eczema/0_20.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.8837119340896606,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.8837119340896606,
+          "Warts Molluscum": 0.04488924890756607,
+          "Tinea Ringworm": 0.041705694049596786
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 99.53116381687809,
+      "file_path": "test_images/eczema/0_21.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.9088166952133179,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.9088166952133179,
+          "Acne": 0.03099348209798336,
+          "Psoriasis": 0.021601321175694466
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 95.54912054912054,
+      "file_path": "test_images/eczema/0_22.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.9204882383346558,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.9204882383346558,
+          "Acne": 0.025800911709666252,
+          "Psoriasis": 0.02273654006421566
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 85.39406753692468,
+      "file_path": "test_images/eczema/0_25.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.9130393862724304,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.9130393862724304,
+          "Warts Molluscum": 0.025106990709900856,
+          "Acne": 0.02345390059053898
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 96.05013176441747,
+      "file_path": "test_images/eczema/0_26.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.9430800080299377,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.9430800080299377,
+          "Acne": 0.021771980449557304,
+          "Psoriasis": 0.01842915080487728
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 85.71581785867501,
+      "file_path": "test_images/eczema/0_27.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.7924790382385254,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.7924790382385254,
+          "Warts Molluscum": 0.13814185559749603,
+          "Acne": 0.028571445494890213
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 99.54035668321383,
+      "file_path": "test_images/eczema/0_28.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with low confidence",
+      "detection": {
+        "disease": "Warts Molluscum",
+        "confidence": 0.6365054845809937,
+        "is_low_confidence": true,
+        "all_predictions": {
+          "Warts Molluscum": 0.6365054845809937,
+          "Eczema": 0.28302454948425293,
+          "Acne": 0.035010870546102524
+        }
+      },
+      "confidence": null,
+      "suggestion": "For accurate diagnosis, please consult a dermatologist.",
+      "reasons": null,
+      "skin_percentage": 98.93669179383465,
+      "file_path": "test_images/eczema/0_29.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.8724166750907898,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.8724166750907898,
+          "Psoriasis": 0.041361503303050995,
+          "Tinea Ringworm": 0.035978514701128006
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 93.19727891156462,
+      "file_path": "test_images/eczema/0_30.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with low confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.5250744819641113,
+        "is_low_confidence": true,
+        "all_predictions": {
+          "Eczema": 0.5250744819641113,
+          "Warts Molluscum": 0.41251692175865173,
+          "Acne": 0.042072396725416183
+        }
+      },
+      "confidence": null,
+      "suggestion": "For accurate diagnosis, please consult a dermatologist.",
+      "reasons": null,
+      "skin_percentage": 97.59146902004045,
+      "file_path": "test_images/eczema/0_4.jpg",
+      "expected_class": null
+    },
+    {
+      "status": "success",
+      "message": "Analysis completed with high confidence",
+      "detection": {
+        "disease": "Eczema",
+        "confidence": 0.9504697322845459,
+        "is_low_confidence": false,
+        "all_predictions": {
+          "Eczema": 0.9504697322845459,
+          "Warts Molluscum": 0.014973800629377365,
+          "Tinea Ringworm": 0.012922159396111965
+        }
+      },
+      "confidence": null,
+      "suggestion": "Use fragrance-free moisturizers and avoid triggers like harsh soaps.",
+      "reasons": null,
+      "skin_percentage": 57.58717901575044,
+      "file_path": "test_images/eczema/0_9.jpg",
+      "expected_class": null
+    }
+  ]
+}
