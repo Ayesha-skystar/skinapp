@@ -46,7 +46,7 @@ const ScanScreen = ({ route }) => {
     ]).start();
   };
 
-  const { symptoms } = route.params || {};
+
 
   const handleCameraPress = async () => {
     animatePress();
@@ -118,7 +118,7 @@ const ScanScreen = ({ route }) => {
         type: `image/${fileType}`,
       });
 
-      const response = await axios.post('http://192.168.1.107:8000/detect', formData, {
+      const response = await axios.post('http://192.168.1.106:8000/detect', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -255,7 +255,7 @@ const ScanScreen = ({ route }) => {
         </ScrollView>
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <Text style={styles.title}>SkinScan Analysis</Text>
+          <Text style={styles.title}>Skin Scan Analysis</Text>
 
           <View style={styles.imageContainer}>
             <Image source={{ uri: image }} style={styles.image} />
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 32,
+    fontSize: 31,
     fontWeight: 'bold',
     color: '#7F3C88',
     marginBottom: 50,
