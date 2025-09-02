@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { initializeFirestore, persistentLocalCache } from 'firebase/firestore';
+import { initializeFirestore} from 'firebase/firestore';
 
 const historyFirebaseConfig = {
   apiKey: "AIzaSyBQ-zBkBr7InWXu8CyF_sGEqUWSDiLcf9M",
@@ -14,7 +14,7 @@ const historyFirebaseConfig = {
 const historyApp = initializeApp(historyFirebaseConfig, 'HistoryModule');
 
 const historyFirestore = initializeFirestore(historyApp, {
-  localCache: persistentLocalCache(),
+  
   experimentalForceLongPolling: true
 });
 
