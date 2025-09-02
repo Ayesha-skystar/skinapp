@@ -317,7 +317,7 @@ async def detect(file: UploadFile = File(...)):
                     message="Analysis completed with high confidence",
                     detection={
                         "disease": detected_disease,
-                        "confidence": confidence,
+                        
                         "is_low_confidence": False,
                         "all_predictions": top_predictions
                     },
