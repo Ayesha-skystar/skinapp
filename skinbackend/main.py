@@ -17,7 +17,7 @@ import uvicorn
 import traceback
 
 # Configuration - UPDATE WITH YOUR ACTUAL MODEL PATH
-DETECTION_MODEL_PATH = "D:/fyp/skinbackend/model/model.pth"
+DETECTION_MODEL_PATH = "model/model.pth"
 CLASS_NAMES = ['Acne', 'Eczema', 'Psoriasis', 'Tinea Ringworm', 'Warts Molluscum']
 DETECTION_IMAGE_SIZE = 384
 MIN_CONFIDENCE_THRESHOLD = 0.7
@@ -36,10 +36,10 @@ logger.info(f"Using device: {device}")
 # Set up CORS (Cross-Origin Resource Sharing)
 # Allow requests from these origins
 origins = [
-    "http://localhost:8081",    # For local Expo development
-    "http://localhost:19006",   # For local Expo web development
-    "https://your-app-name.onrender.com", # Your own Render domain, sometimes needed
-    "*"                         # Allows ALL origins. OK for testing, but be careful for production!
+     "http://localhost:19006",  # Expo Dev
+    "http://localhost:8081",   # Expo Go
+    "https://yourappname.up.railway.app", # Your LIVE Railway URL
+    "*" # Allows all origins (for testing only)                  # Allows ALL origins. OK for testing, but be careful for production!
 ]
 # CORS middleware
 app.add_middleware(
