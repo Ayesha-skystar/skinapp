@@ -23,7 +23,7 @@ DETECTION_IMAGE_SIZE = 384
 MIN_CONFIDENCE_THRESHOLD = 0.7
 MIN_SKIN_PERCENTAGE = 20.0  # Minimum percentage of skin pixels required
 
-app = FastAPI(title="Skin Disease Detection API", version="1.0")
+app = FastAPI(title="Skin Disease Detection API", version="1.0.0")
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -32,10 +32,21 @@ logger = logging.getLogger(__name__)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger.info(f"Using device: {device}")
 
+
+# Set up CORS (Cross-Origin Resource Sharing)
+# Allow requests from these origins
+origins = [
+    "http://localhost:8081",    # For local Expo development
+    "http://localhost:19006",   # For local Expo web development
+    "https://your-app-name.onrender.com", # Your own Render domain, sometimes needed
+    "*"                         # Allows ALL origins. OK for testing, but be careful for production!
+]
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    # List of origins that are allowed to make requests
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
